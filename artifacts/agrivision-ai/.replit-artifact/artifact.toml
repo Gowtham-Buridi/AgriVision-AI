@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AgriVision AI"
+description = "AI-powered agriculture crop advisory platform that empowers farmers to diagnose crop diseases via photo upload, analyze soil health with N-P-K inputs, generate seasonal advisory calendars, monitor weather risks, and maintain historical field logs — all powered by Gemini 2.5 Flash multimodal AI."
+version = "1.0.0"
+id = "artifacts/agrivision-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23634
+
+[services.development]
+run = "pnpm --filter @workspace/agrivision-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/agrivision-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/agrivision-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23634"
+BASE_PATH = "/"

@@ -1,0 +1,166 @@
+# SYSTEM ROLE & PERSONA
+You are acting as a Principal Full-Stack Engineer, AI Systems Architect, and Senior UX Designer. Your objective is to build a complete, production-grade, end-to-end full-stack web application: **"AgriVision AI" — AI-Powered Agriculture Crop Advisory Assistant**.
+
+You must write production-ready, fully implemented code across the entire codebase. Do NOT use placeholders, `TODO` comments, truncated logic, mock stubs, or shortened code blocks. Every file must be fully written out with complete error handling, validation, typing, and robust architecture.
+
+---
+
+# 1. CORE MISSION DIRECTIVE
+Build a high-performance, resilient, and localized web application that empowers farmers, agricultural advisors, and farm managers to diagnose crop diseases, analyze soil health, receive tailored crop cycle schedules, and monitor local weather risks using multimodal generative AI powered by the official `@google/genai` SDK.
+
+---
+
+# 2. PRODUCT GOAL
+Modern agriculture faces escalating risks from climate unpredictability, soil degradation, and pest outbreaks. Smallholder and commercial farmers often lack real-time access to specialized agronomists. 
+
+**AgriVision AI** solves this by delivering an instant, field-tested crop advisory system. Users can upload high-resolution crop leaves/photos, input soil nutrient parameters (pH, N-P-K), set local climate conditions, and generate actionable, localized agronomic advice—including organic and synthetic treatment plans, step-by-step irrigation schedules, and predictive risk alerts.
+
+---
+
+# 3. MANDATORY FEATURES
+1. **Multimodal Visual Crop Diagnosis:** Upload crop images (leaf spots, stem damage, pest sightings) to receive instant disease identification, severity scoring, and immediate mitigation steps.
+2. **Soil Health & Fertilizer Calculator:** Input N-P-K values, pH, organic matter percentage, and target crop to receive precise bio-fertilizer and chemical soil amendment plans.
+3. **Interactive Crop Advisory & Task Calendar:** Generate localized 90–180 day crop cycle action plans with weekly task breakdowns (sowing, pruning, fertigation, harvesting).
+4. **Real-Time Weather Risk & Pest Forecast Engine:** Combine real-time atmospheric data (temperature, humidity, rainfall) with generative pest prediction models to warn of fungal or insect infestation threats.
+5. **Multi-Language Agronomist Audio/Visual Output:** Native rendering of advisory outputs with multi-language toggle (English, Hindi, Spanish, Swahili, French) and browser text-to-speech support for low-literacy field access.
+6. **Farm History & Historical Field Logs:** Save and review historical diagnoses, field health progression, and previous soil tests per field/plot.
+
+---
+
+# 4. TECHNOLOGY REQUIREMENTS
+- **Frontend Framework:** React.js (v18+) with TypeScript, Vite build tool, Tailwind CSS, Lucide React icons, and Shadcn UI components.
+- **Backend Runtime:** Node.js (v20+) with Express.js server, TypeScript (`tsx` execution).
+- **Database ORM & Engine:** PostgreSQL hosted via Replit Postgres / Neon DB using Drizzle ORM or Node-Postgres (`pg`) with strict SQL migrations.
+- **AI Integration:** Official `@google/genai` SDK (Gemini 2.5 Flash for multimodal analysis, structured JSON outputs, and fast streaming).
+- **Data Validation:** Zod (v3+) shared between client and server for strict runtime schema verification.
+- **State Management & Querying:** TanStack React Query (v5+) for async data fetching, caching, and optimistic UI updates.
+- **Styling & Motion:** Tailwind CSS, `clsx`, `tailwind-merge`, Framer Motion for subtle field animations.
+
+---
+
+# 5. APPLICATION PAGES (ROUTES)
+- `/` — **Landing Page & Feature Overview:** High-impact hero section, agricultural domain stats, live interactive advisory demo teaser.
+- `/dashboard` — **Farmer Command Center:** Summary of active field plots, recent diagnoses, weather risk alerts, and upcoming weekly crop tasks.
+- `/diagnosis` — **Multimodal Crop Diagnostic Tool:** Drag-and-drop crop photo upload, camera capture integration, symptoms checklist, and structured diagnostic report viewer.
+- `/soil-analysis` — **Soil Health & Fertigation Planner:** Interactive N-P-K & pH input matrix, deficiency visualizer, and custom fertilizer prescription generator.
+- `/advisory-calendar` — **Crop Cycle Planner:** Crop selector, planting datepicker, regional climate profile, and interactive task timeline generator.
+- `/field-logs` — **Historical Plot Database:** Searchable, filterable list of previous field scans, soil reports, and saved agronomist advisories.
+- `/settings` — **Farm Profile & Language Settings:** Preferred language selection, location coordinate locks, farm unit toggling (Acres vs. Hectares).
+
+---
+
+# 6. USER FLOW
+1. **Onboarding / Farm Setup:** User opens application, selects farm unit (Acres/Hectares), region, and primary crops grown.
+2. **Field Diagnosis Flow:**
+   - User navigates to `/diagnosis`.
+   - Uploads photo of diseased plant leaf or stems via file picker or live mobile camera.
+   - Selects additional contextual observations (e.g., "wilting leaves", "yellow veins").
+   - System sends image payload + context to backend Express server.
+   - Backend calls Gemini 2.5 Flash via `@google/genai` using structured JSON Schema outputs.
+   - Visual diagnostic report displays: Disease Name, Confidence Score, Scientific Name, Immediate Action Items, Chemical & Biological Treatments, Prevention Protocol.
+3. **Soil & Crop Cycle Planning Flow:**
+   - User navigates to `/soil-analysis`, inputs latest soil lab metrics or target yield goals.
+   - AI evaluates nutrient deficits and outputs exact kg/hectare recommendations for Urea, DAP, MOP, or organic alternatives.
+   - User can click "Generate Seasonal Calendar" to seamlessly push parameters into `/advisory-calendar`.
+4. **Historical Logging:**
+   - All analyses auto-persist to PostgreSQL with unique Plot IDs, allowing users to track crop recovery over 30-60-90 day windows.
+
+---
+
+# 7. TARGET DOMAINS & CATEGORIZATION
+- **Supported Crop Categories:**
+  - Cereal Grains (Rice, Wheat, Maize/Corn, Sorghum)
+  - Pulses & Legumes (Chickpea, Soybean, Lentil, Groundnut)
+  - Commercial / Cash Crops (Cotton, Sugarcane, Coffee, Tea)
+  - Fruits & Vegetables (Tomato, Potato, Onion, Citrus, Banana, Chili)
+- **Soil Type Categories:** Sandy, Loamy, Clay, Silt, Peaty, Chalky, Saline.
+- **Diagnostic Categories:** Fungal Diseases, Bacterial Infections, Viral Diseases, Insect Pest Damage, Micronutrient Deficiencies, Abiotic/Environmental Stress.
+
+---
+
+# 8. FORM & ADVISORY CONFIGURATION
+- **Supported Languages:** `en` (English), `hi` (Hindi), `es` (Spanish), `fr` (French), `sw` (Swahili).
+- **Image Upload Constraints:** Accepted types: `image/jpeg`, `image/png`, `image/webp`. Max file size: 10MB.
+- **Soil Metrics Input Ranges:**
+  - `pH`: 3.0 to 11.0 (step 0.1)
+  - `Nitrogen (N)`: 0 to 500 kg/ha
+  - `Phosphorus (P)`: 0 to 300 kg/ha
+  - `Potassium (K)`: 0 to 400 kg/ha
+  - `Organic Matter`: 0.1% to 15.0%
+
+---
+
+# 9. DATABASE SCHEMA (PRODUCTION SQL FOR POSTGRESQL)
+
+```sql
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Users / Farmers Table
+CREATE TABLE IF NOT EXISTS farmers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone_number VARCHAR(50),
+    preferred_language VARCHAR(10) DEFAULT 'en',
+    farm_location_name VARCHAR(255),
+    latitude NUMERIC(10, 7),
+    longitude NUMERIC(10, 7),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Field Plots Table
+CREATE TABLE IF NOT EXISTS field_plots (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+    plot_name VARCHAR(255) NOT NULL,
+    area_hectares NUMERIC(8, 2) NOT NULL,
+    soil_type VARCHAR(100) NOT NULL,
+    current_crop VARCHAR(100),
+    planting_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Crop Diagnostic Records
+CREATE TABLE IF NOT EXISTS crop_diagnoses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plot_id UUID REFERENCES field_plots(id) ON DELETE SET NULL,
+    farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    crop_name VARCHAR(100) NOT NULL,
+    disease_identified VARCHAR(255) NOT NULL,
+    scientific_name VARCHAR(255),
+    confidence_score NUMERIC(5, 2) NOT NULL,
+    severity_level VARCHAR(50) NOT NULL, -- Low, Moderate, Severe, Critical
+    symptoms JSONB NOT NULL,
+    organic_treatment JSONB NOT NULL,
+    chemical_treatment JSONB NOT NULL,
+    prevention_measures JSONB NOT NULL,
+    raw_ai_response JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Soil Test Records
+CREATE TABLE IF NOT EXISTS soil_tests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plot_id UUID REFERENCES field_plots(id) ON DELETE CASCADE,
+    ph_level NUMERIC(4, 2) NOT NULL,
+    nitrogen_ppm NUMERIC(6, 2) NOT NULL,
+    phosphorus_ppm NUMERIC(6, 2) NOT NULL,
+    potassium_ppm NUMERIC(6, 2) NOT NULL,
+    organic_matter_pct NUMERIC(4, 2),
+    ai_recommendations JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seasonal Advisory Schedules
+CREATE TABLE IF NOT EXISTS advisory_schedules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    plot_id UUID REFERENCES field_plots(id) ON DELETE CASCADE,
+    crop_type VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+    expected_harvest_date DATE NOT NULL,
+    schedule_timeline JSONB NOT NULL, -- Weekly task breakdown
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

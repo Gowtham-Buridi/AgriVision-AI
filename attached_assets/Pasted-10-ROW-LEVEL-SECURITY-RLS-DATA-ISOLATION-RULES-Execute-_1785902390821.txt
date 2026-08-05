@@ -1,0 +1,251 @@
+10. ROW LEVEL SECURITY (RLS) / DATA ISOLATION RULES
+Execute RLS policies in PostgreSQL to ensure strict multi-tenant isolation per farmer_id.
+
+Farmers can ONLY SELECT, INSERT, UPDATE, or DELETE records where farmer_id = auth.uid() or matching session token context.
+
+Public/Unauthenticated users are prohibited from reading field diagnostic records or soil reports.
+
+11. BACKEND API ROUTES
+POST /api/diagnosis/analyze — Accepts multipart image + JSON metadata (cropName, observedSymptoms, language). Executes Gemini 2.5 Flash multimodal inspection. Returns validated diagnosis schema. Saves to DB.
+
+POST /api/soil/recommend — Accepts soil metrics (pH, N, P, K, crop target). Generates structured soil correction & fertilizer regimen.
+
+POST /api/advisory/schedule — Accepts crop type, planting date, and region. Generates weekly agricultural task timeline.
+
+GET /api/plots — Retrieves all field plots for the logged-in farmer.
+
+POST /api/plots — Creates a new field plot record.
+
+GET /api/history/diagnoses — Retrieves paginated historical crop diagnoses.
+
+GET /api/weather/risk — Fetches current regional weather risk indicators and generates AI-driven pest risk forecasts.
+
+12. GEMINI SDK SETUP & SERVER-SIDE SECURITY
+You MUST use @google/genai SDK exclusively (do NOT use deprecated @google/generative-ai package).
+
+Initialize the SDK on the server side:
+
+TypeScript
+import { GoogleGenAI } from '@google/genai';
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+API Keys MUST NOT be exposed to the client bundle under any circumstances. All calls to Gemini must be handled inside secure backend Express handlers.
+
+Model to use: gemini-2.5-flash for high-speed diagnostic response and structured outputs.
+
+13. AI SYSTEM PROMPT
+The backend system prompt provided to Gemini must be strictly enforced:
+
+"You are Senior Dr. Aris Thorne, a world-class Agronomist, Plant Pathologist, and Soil Health Specialist with over 25 years of field experience in global tropical and temperate farming systems. Your job is to analyze plant visual symptoms, diagnose crop issues with scientific rigor, provide actionable, realistic, and eco-friendly farming advice, and deliver structured outputs adhering strictly to the required JSON Schema. Always prioritize sustainable, integrated pest management (IPM) alongside chemical interventions where critical. Adjust explanations to be understandable by a local farmer while preserving scientific accuracy."
+
+14. DETAILED AI PROMPTS & JSON SCHEMAS
+A. Multimodal Crop Diagnosis Response Schema:
+JSON
+{
+  "type": "object",
+  "properties": {
+    "cropName": { "type": "string" },
+    "diseaseIdentified": { "type": "string" },
+    "scientificName": { "type": "string" },
+    "confidenceScore": { "type": "number", "description": "Percentage value between 0 and 100" },
+    "severityLevel": { "type": "string", "enum": ["Low", "Moderate", "Severe", "Critical"] },
+    "symptomsAnalysis": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "immediateAction": { "type": "string" },
+    "organicTreatment": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "chemicalTreatment": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preventiveMeasures": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "localizedNote": { "type": "string" }
+  },
+  "required": ["cropName", "diseaseIdentified", "confidenceScore", "severityLevel", "symptomsAnalysis", "immediateAction", "organicTreatment", "chemicalTreatment", "preventiveMeasures"]
+}
+B. Soil Analysis Response Schema:
+JSON
+{
+  "type": "object",
+  "properties": {
+    "overallHealthRating": { "type": "string", "enum": ["Optimal", "Deficient", "Toxic/Excess", "Imbalanced"] },
+    "phAnalysis": { "type": "string" },
+    "nutrientDeficiencies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "organicAmendments": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fertilizerRegimen": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": { "type": "string" },
+          "fertilizerName": { "type": "string" },
+          "dosageKgPerHa": { "type": "number" },
+          "applicationMethod": { "type": "string" }
+        },
+        "required": ["stage", "fertilizerName", "dosageKgPerHa", "applicationMethod"]
+      }
+    },
+    "irrigationAdvice": { "type": "string" }
+  },
+  "required": ["overallHealthRating", "phAnalysis", "nutrientDeficiencies", "organicAmendments", "fertilizerRegimen", "irrigationAdvice"]
+}
+15. ZOD VALIDATION REQUIREMENTS
+Define robust Zod schemas on both client and server to validate inputs prior to processing API calls.
+
+TypeScript
+import { z } from 'zod';
+
+export const DiagnosisRequestSchema = z.object({
+  cropName: z.string().min(2, "Crop name is required"),
+  observedSymptoms: z.string().optional(),
+  language: z.enum(['en', 'hi', 'es', 'fr', 'sw']).default('en'),
+  plotId: z.string().uuid().optional(),
+});
+
+export const SoilAnalysisRequestSchema = z.object({
+  phLevel: z.number().min(3.0).max(11.0),
+  nitrogenPpm: z.number().min(0).max(1000),
+  phosphorusPpm: z.number().min(0).max(1000),
+  potassiumPpm: z.number().min(0).max(1000),
+  organicMatterPct: z.number().min(0).max(20).optional(),
+  targetCrop: z.string().min(2, "Target crop is required"),
+  language: z.enum(['en', 'hi', 'es', 'fr', 'sw']).default('en'),
+});
+16. FRONTEND COMPONENTS LIST
+Navbar.tsx — Responsive navigation with language selector, active plot context indicator, and status badge.
+
+ImageUploader.tsx — Interactive drag-and-drop crop photo upload component supporting live camera feed selection and preview thumbnails.
+
+DiagnosticCard.tsx — Rich visual display of AI crop analysis with severity badges, percentage gauges, and actionable tabs (Organic vs Chemical).
+
+SoilMatrixInput.tsx — Styled numeric sliders and gauge indicators for N-P-K levels and pH scale.
+
+TaskTimeline.tsx — Interactive step-by-step seasonal calendar showing weekly farm tasks with completion checkboxes.
+
+AudioPlayer.tsx — Integrated browser Text-to-Speech component for listening to generated advisory in native farmer languages.
+
+WeatherAlertBanner.tsx — Micro-widget showing local temperature/humidity and AI-projected fungal/pest threat scores.
+
+17. SECURITY REQUIREMENTS
+API Key Protection: GEMINI_API_KEY must strictly reside in server-side environment variables. Never expose it with VITE_ prefixes.
+
+Input Sanitization: Sanitize all text fields passed to AI prompts to prevent Prompt Injection attacks.
+
+File Upload Limits: Validate mime types (jpeg, png, webp) and reject files exceeding 10MB on backend before buffers are sent to Gemini.
+
+CORS Configuration: Restrict API routes to authorized origins.
+
+18. ENVIRONMENT VARIABLES TEMPLATE
+Create a .env.example file:
+
+Code snippet
+# Server Config
+PORT=5000
+NODE_ENV=development
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/agrivision_db
+
+# Gemini AI SDK
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Client App URL
+CLIENT_URL=http://localhost:3000
+19. SUGGESTED FOLDER STRUCTURE
+agrivision-ai/
+├── client/
+│   ├── index.html
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── ImageUploader.tsx
+│   │   │   ├── DiagnosticCard.tsx
+│   │   │   ├── SoilMatrixInput.tsx
+│   │   │   ├── TaskTimeline.tsx
+│   │   │   ├── AudioPlayer.tsx
+│   │   │   └── WeatherAlertBanner.tsx
+│   │   ├── pages/
+│   │   │   ├── LandingPage.tsx
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── DiagnosisPage.tsx
+│   │   │   ├── SoilAnalysisPage.tsx
+│   │   │   ├── AdvisoryCalendarPage.tsx
+│   │   │   └── FieldLogsPage.tsx
+│   │   ├── lib/
+│   │   │   ├── api.ts
+│   │   │   └── speech.ts
+│   │   ├── types/
+│   │   │   └── index.ts
+│   │   ├── App.tsx
+│   │   └── main.tsx
+├── server/
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── db.ts
+│   │   ├── controllers/
+│   │   │   ├── diagnosisController.ts
+│   │   │   ├── soilController.ts
+│   │   │   └── advisoryController.ts
+│   │   ├── middleware/
+│   │   │   ├── upload.ts
+│   │   │   └── errorHandler.ts
+│   │   ├── routes/
+│   │   │   ├── diagnosis.ts
+│   │   │   ├── soil.ts
+│   │   │   └── advisory.ts
+│   │   ├── services/
+│   │   │   └── geminiService.ts
+│   │   ├── schemas/
+│   │   │   └── validation.ts
+│   │   └── index.ts
+├── shared/
+│   └── schema.ts
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── tailwind.config.js
+20. IMPLEMENTATION PHASES
+Phase 1: Project Setup & Database Migration — Initialize Vite React frontend, Express TypeScript backend, Tailwind CSS, install @google/genai SDK, and run PostgreSQL schema setup.
+
+Phase 2: Backend Gemini Service & Zod Validation — Implement geminiService.ts utilizing gemini-2.5-flash with structured responseSchema configurations for crop diagnosis, soil analysis, and schedule planning.
+
+Phase 3: Diagnostic & Soil API Endpoints — Write file upload handlers (multer/buffer) and API controller endpoints for /api/diagnosis/analyze and /api/soil/recommend.
+
+Phase 4: Frontend Core Components & UI Layout — Build high-conversion agricultural theme UI using Tailwind CSS, including ImageUploader, DiagnosticCard, and SoilMatrixInput.
+
+Phase 5: Task Calendar & Multilingual Audio Integration — Implement interactive advisory timeline and browser Text-to-Speech integration for regional languages.
+
+Phase 6: Integration, Polish & Field Testing — Wire full stack together with TanStack Query, test multimodal plant diagnosis scenarios, handle error states, and ensure mobile-responsive layout.
+
+21. ACCEPTANCE CRITERIA
+[ ] Plant diagnosis accepts uploaded images and returns valid, rich JSON output containing disease identification, confidence scores, and organic/chemical treatments.
+
+[ ] Gemini SDK is called strictly using the official @google/genai library with server-side API key isolation.
+
+[ ] Soil health form accurately evaluates N-P-K and pH inputs, producing dosage-calculated fertigation schedules.
+
+[ ] Web application displays responsive UI optimized for mobile devices in field conditions.
+
+[ ] Database correctly saves field plots, crop diagnoses, and soil test logs tied to farmer accounts.
+
+[ ] Audio accessibility component speaks advisory outputs in chosen application languages.
+
+[ ] Codebase contains zero placeholder files, broken routes, or missing type definitions.
+
+22. FINAL INSTRUCTION TO CODING AGENT
+"Proceed to generate the full application codebase now based on the Master Prompt instructions above. Start by creating the server and client directory structure, setting up configuration files, writing the database schema migrations, implementing the backend Gemini services with strict @google/genai SDK integration, and completing all frontend React components and route views. Output complete, fully functioning code files."
