@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AgriVision AI – crop advisory platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: plots
+    description: Field plot management
+  - name: diagnosis
+    description: Crop disease diagnosis
+  - name: soil
+    description: Soil health analysis
+  - name: advisory
+    description: Seasonal crop advisory schedules
+  - name: history
+    description: Historical field logs
+  - name: weather
+    description: Weather risk forecasts
+  - name: dashboard
+    description: Dashboard summary data
+  - name: farmers
+    description: Farmer profile management
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +40,752 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Farmer Profile ───────────────────────────────────────────────────────
+  /farmers/profile:
+    get:
+      operationId: getFarmerProfile
+      tags: [farmers]
+      summary: Get current farmer profile (creates default if none)
+      responses:
+        "200":
+          description: Farmer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Farmer"
+    put:
+      operationId: updateFarmerProfile
+      tags: [farmers]
+      summary: Update farmer profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FarmerInput"
+      responses:
+        "200":
+          description: Updated farmer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Farmer"
+
+  # ─── Field Plots ──────────────────────────────────────────────────────────
+  /plots:
+    get:
+      operationId: listPlots
+      tags: [plots]
+      summary: List all field plots
+      responses:
+        "200":
+          description: List of plots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FieldPlot"
+    post:
+      operationId: createPlot
+      tags: [plots]
+      summary: Create a new field plot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FieldPlotInput"
+      responses:
+        "201":
+          description: Created plot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldPlot"
+
+  /plots/{id}:
+    get:
+      operationId: getPlot
+      tags: [plots]
+      summary: Get a specific plot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Field plot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldPlot"
+        "404":
+          description: Not found
+    patch:
+      operationId: updatePlot
+      tags: [plots]
+      summary: Update a field plot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FieldPlotUpdate"
+      responses:
+        "200":
+          description: Updated plot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldPlot"
+    delete:
+      operationId: deletePlot
+      tags: [plots]
+      summary: Delete a field plot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Crop Diagnosis ───────────────────────────────────────────────────────
+  /diagnosis/analyze:
+    post:
+      operationId: analyzeCrop
+      tags: [diagnosis]
+      summary: Analyze crop image for disease using Gemini AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiagnosisInput"
+      responses:
+        "200":
+          description: Diagnosis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CropDiagnosis"
+
+  # ─── Soil Analysis ────────────────────────────────────────────────────────
+  /soil/recommend:
+    post:
+      operationId: analyzeSoil
+      tags: [soil]
+      summary: Generate soil health and fertilizer recommendations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SoilTestInput"
+      responses:
+        "200":
+          description: Soil analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoilAnalysisResult"
+
+  # ─── Advisory Calendar ────────────────────────────────────────────────────
+  /advisory/schedule:
+    post:
+      operationId: generateAdvisory
+      tags: [advisory]
+      summary: Generate seasonal crop advisory schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvisoryInput"
+      responses:
+        "200":
+          description: Advisory schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdvisorySchedule"
+
+  # ─── Historical Logs ─────────────────────────────────────────────────────
+  /history/diagnoses:
+    get:
+      operationId: listDiagnoses
+      tags: [history]
+      summary: List historical crop diagnoses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 20
+        - name: plotId
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Paginated diagnoses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedDiagnoses"
+
+  /history/soil-tests:
+    get:
+      operationId: listSoilTests
+      tags: [history]
+      summary: List historical soil tests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 20
+        - name: plotId
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Paginated soil tests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedSoilTests"
+
+  /history/schedules:
+    get:
+      operationId: listSchedules
+      tags: [history]
+      summary: List historical advisory schedules
+      parameters:
+        - name: plotId
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdvisorySchedule"
+
+  # ─── Weather Risk ─────────────────────────────────────────────────────────
+  /weather/risk:
+    get:
+      operationId: getWeatherRisk
+      tags: [weather]
+      summary: Get weather conditions and AI-generated pest risk forecast
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: cropType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Weather risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherRisk"
+
+  # ─── Dashboard Summary ────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard statistics and recent activity
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    # ─── Farmer ────────────────────────────────────────────────────────────
+    Farmer:
+      type: object
+      required: [id, fullName, email, preferredLanguage, createdAt]
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: ["string", "null"]
+        preferredLanguage:
+          type: string
+        farmLocationName:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        farmUnit:
+          type: string
+          enum: [acres, hectares]
+        primaryCrops:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    FarmerInput:
+      type: object
+      required: [fullName, email]
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        preferredLanguage:
+          type: string
+          enum: [en, hi, es, fr, sw]
+        farmLocationName:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        farmUnit:
+          type: string
+          enum: [acres, hectares]
+        primaryCrops:
+          type: string
+
+    # ─── Field Plot ────────────────────────────────────────────────────────
+    FieldPlot:
+      type: object
+      required: [id, plotName, areaHectares, soilType, createdAt]
+      properties:
+        id:
+          type: string
+        farmerId:
+          type: string
+        plotName:
+          type: string
+        areaHectares:
+          type: number
+        soilType:
+          type: string
+        currentCrop:
+          type: ["string", "null"]
+        plantingDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    FieldPlotInput:
+      type: object
+      required: [plotName, areaHectares, soilType]
+      properties:
+        plotName:
+          type: string
+          minLength: 1
+        areaHectares:
+          type: number
+          minimum: 0
+        soilType:
+          type: string
+        currentCrop:
+          type: string
+        plantingDate:
+          type: string
+
+    FieldPlotUpdate:
+      type: object
+      properties:
+        plotName:
+          type: string
+          minLength: 1
+        areaHectares:
+          type: number
+          minimum: 0
+        soilType:
+          type: string
+        currentCrop:
+          type: string
+        plantingDate:
+          type: string
+
+    # ─── Diagnosis ─────────────────────────────────────────────────────────
+    DiagnosisInput:
+      type: object
+      required: [cropName, imageBase64, imageMimeType]
+      properties:
+        cropName:
+          type: string
+          minLength: 2
+        imageBase64:
+          type: string
+          description: Base64-encoded image data
+        imageMimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+        observedSymptoms:
+          type: string
+        language:
+          type: string
+          enum: [en, hi, es, fr, sw]
+        plotId:
+          type: ["string", "null"]
+
+    FertilizerStep:
+      type: object
+      required: [stage, fertilizerName, dosageKgPerHa, applicationMethod]
+      properties:
+        stage:
+          type: string
+        fertilizerName:
+          type: string
+        dosageKgPerHa:
+          type: number
+        applicationMethod:
+          type: string
+
+    CropDiagnosis:
+      type: object
+      required: [id, cropName, diseaseIdentified, confidenceScore, severityLevel, symptomsAnalysis, immediateAction, organicTreatment, chemicalTreatment, preventiveMeasures, createdAt]
+      properties:
+        id:
+          type: string
+        plotId:
+          type: ["string", "null"]
+        cropName:
+          type: string
+        diseaseIdentified:
+          type: string
+        scientificName:
+          type: ["string", "null"]
+        confidenceScore:
+          type: number
+        severityLevel:
+          type: string
+          enum: [Low, Moderate, Severe, Critical]
+        symptomsAnalysis:
+          type: array
+          items:
+            type: string
+        immediateAction:
+          type: string
+        organicTreatment:
+          type: array
+          items:
+            type: string
+        chemicalTreatment:
+          type: array
+          items:
+            type: string
+        preventiveMeasures:
+          type: array
+          items:
+            type: string
+        localizedNote:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+        createdAt:
+          type: string
+
+    # ─── Soil Analysis ─────────────────────────────────────────────────────
+    SoilTestInput:
+      type: object
+      required: [phLevel, nitrogenPpm, phosphorusPpm, potassiumPpm, targetCrop]
+      properties:
+        plotId:
+          type: ["string", "null"]
+        phLevel:
+          type: number
+          minimum: 3.0
+          maximum: 11.0
+        nitrogenPpm:
+          type: number
+          minimum: 0
+          maximum: 1000
+        phosphorusPpm:
+          type: number
+          minimum: 0
+          maximum: 1000
+        potassiumPpm:
+          type: number
+          minimum: 0
+          maximum: 1000
+        organicMatterPct:
+          type: number
+          minimum: 0
+          maximum: 20
+        targetCrop:
+          type: string
+          minLength: 2
+        language:
+          type: string
+          enum: [en, hi, es, fr, sw]
+
+    SoilAnalysisResult:
+      type: object
+      required: [id, overallHealthRating, phAnalysis, nutrientDeficiencies, organicAmendments, fertilizerRegimen, irrigationAdvice, createdAt]
+      properties:
+        id:
+          type: string
+        plotId:
+          type: ["string", "null"]
+        overallHealthRating:
+          type: string
+          enum: [Optimal, Deficient, "Toxic/Excess", Imbalanced]
+        phAnalysis:
+          type: string
+        nutrientDeficiencies:
+          type: array
+          items:
+            type: string
+        organicAmendments:
+          type: array
+          items:
+            type: string
+        fertilizerRegimen:
+          type: array
+          items:
+            $ref: "#/components/schemas/FertilizerStep"
+        irrigationAdvice:
+          type: string
+        createdAt:
+          type: string
+
+    # ─── Advisory Schedule ─────────────────────────────────────────────────
+    AdvisoryInput:
+      type: object
+      required: [cropType, startDate, regionName]
+      properties:
+        plotId:
+          type: ["string", "null"]
+        cropType:
+          type: string
+          minLength: 2
+        startDate:
+          type: string
+          description: YYYY-MM-DD
+        regionName:
+          type: string
+        soilType:
+          type: string
+        language:
+          type: string
+          enum: [en, hi, es, fr, sw]
+
+    WeeklyTask:
+      type: object
+      required: [week, startDate, tasks, category]
+      properties:
+        week:
+          type: number
+        startDate:
+          type: string
+        tasks:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        notes:
+          type: ["string", "null"]
+
+    AdvisorySchedule:
+      type: object
+      required: [id, cropType, startDate, expectedHarvestDate, weeklyTasks, totalDays, createdAt]
+      properties:
+        id:
+          type: string
+        plotId:
+          type: ["string", "null"]
+        cropType:
+          type: string
+        startDate:
+          type: string
+        expectedHarvestDate:
+          type: string
+        weeklyTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyTask"
+        totalDays:
+          type: number
+        createdAt:
+          type: string
+
+    # ─── Weather Risk ──────────────────────────────────────────────────────
+    WeatherRisk:
+      type: object
+      required: [temperature, humidity, rainfall, overallRiskLevel, pestRisks, recommendations, generatedAt]
+      properties:
+        temperature:
+          type: number
+        humidity:
+          type: number
+        rainfall:
+          type: number
+        overallRiskLevel:
+          type: string
+          enum: [Low, Moderate, High, Critical]
+        pestRisks:
+          type: array
+          items:
+            type: object
+            required: [pestName, riskLevel, description]
+            properties:
+              pestName:
+                type: string
+              riskLevel:
+                type: string
+              description:
+                type: string
+        fungalRiskScore:
+          type: number
+        insectRiskScore:
+          type: number
+        recommendations:
+          type: array
+          items:
+            type: string
+        generatedAt:
+          type: string
+
+    # ─── Dashboard ─────────────────────────────────────────────────────────
+    RecentDiagnosisSummary:
+      type: object
+      required: [id, cropName, diseaseIdentified, severityLevel, confidenceScore, createdAt]
+      properties:
+        id:
+          type: string
+        cropName:
+          type: string
+        diseaseIdentified:
+          type: string
+        severityLevel:
+          type: string
+        confidenceScore:
+          type: number
+        plotName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    DashboardSummary:
+      type: object
+      required: [totalPlots, totalDiagnoses, totalSoilTests, totalSchedules, recentDiagnoses, severityBreakdown, cropDistribution]
+      properties:
+        totalPlots:
+          type: number
+        totalDiagnoses:
+          type: number
+        totalSoilTests:
+          type: number
+        totalSchedules:
+          type: number
+        recentDiagnoses:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentDiagnosisSummary"
+        severityBreakdown:
+          type: object
+          required: [Low, Moderate, Severe, Critical]
+          properties:
+            Low:
+              type: number
+            Moderate:
+              type: number
+            Severe:
+              type: number
+            Critical:
+              type: number
+        cropDistribution:
+          type: array
+          items:
+            type: object
+            required: [crop, count]
+            properties:
+              crop:
+                type: string
+              count:
+                type: number
+
+    # ─── Pagination ────────────────────────────────────────────────────────
+    PaginatedDiagnoses:
+      type: object
+      required: [items, total, page, limit]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CropDiagnosis"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+
+    PaginatedSoilTests:
+      type: object
+      required: [items, total, page, limit]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SoilAnalysisResult"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number

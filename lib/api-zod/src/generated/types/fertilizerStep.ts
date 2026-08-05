@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface FertilizerStep {
+  stage: string;
+  fertilizerName: string;
+  dosageKgPerHa: number;
+  applicationMethod: string;
 }

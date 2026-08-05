@@ -3,29 +3,68 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Layout } from '@/components/layout';
 
-const queryClient = new QueryClient();
+import { LandingPage } from '@/pages/landing';
+import { DashboardPage } from '@/pages/dashboard';
+import { DiagnosisPage } from '@/pages/diagnosis';
+import { SoilAnalysisPage } from '@/pages/soil-analysis';
+import { AdvisoryCalendarPage } from '@/pages/advisory-calendar';
+import { FieldLogsPage } from '@/pages/field-logs';
+import { SettingsPage } from '@/pages/settings';
 
-function Home() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Replit Agent is building...
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Your app will appear here once it's ready.
-        </p>
-      </div>
-    </div>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
+      <Route path="/">
+        <Layout>
+          <LandingPage />
+        </Layout>
+      </Route>
+      <Route path="/dashboard">
+        <Layout>
+          <DashboardPage />
+        </Layout>
+      </Route>
+      <Route path="/diagnosis">
+        <Layout>
+          <DiagnosisPage />
+        </Layout>
+      </Route>
+      <Route path="/soil-analysis">
+        <Layout>
+          <SoilAnalysisPage />
+        </Layout>
+      </Route>
+      <Route path="/advisory-calendar">
+        <Layout>
+          <AdvisoryCalendarPage />
+        </Layout>
+      </Route>
+      <Route path="/field-logs">
+        <Layout>
+          <FieldLogsPage />
+        </Layout>
+      </Route>
+      <Route path="/settings">
+        <Layout>
+          <SettingsPage />
+        </Layout>
+      </Route>
+      <Route>
+        <Layout>
+          <NotFound />
+        </Layout>
+      </Route>
     </Switch>
   );
 }
